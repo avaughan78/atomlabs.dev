@@ -86,6 +86,7 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
 }
 
 body {
@@ -196,10 +197,31 @@ p { text-wrap: pretty; }
   white-space: nowrap;
 }
 
-.wordmark-icon {
+.nav-icon-stage {
+  position: relative;
   width: 30px;
   height: 30px;
   flex: none;
+}
+
+.nav-icon-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transition: opacity 0.25s ease;
+}
+
+.nav-icon-canvas {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 320%;
+  height: 320%;
+  max-width: none;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  opacity: 0;
 }
 
 .atom-logo .atom-cursor-blink {
@@ -219,6 +241,9 @@ p { text-wrap: pretty; }
   .atom-logo .atom-cursor-blink,
   .atom-logo .atom-electron {
     animation: none;
+  }
+  html {
+    scroll-behavior: auto;
   }
 }
 
@@ -562,16 +587,19 @@ footer .foot-links a:hover { color: var(--accent); }
 
 <nav class="nav">
   <div class="wrap">
-    <a href="#top" class="wordmark"><svg class="wordmark-icon" viewBox="0 0 120 120" aria-hidden="true">
-      <ellipse cx="60" cy="60" rx="46" ry="18" fill="none" stroke="var(--hairline-strong)" stroke-width="2.6"></ellipse>
-      <ellipse cx="60" cy="60" rx="46" ry="18" transform="rotate(60 60 60)" fill="none" stroke="var(--hairline-strong)" stroke-width="2.6"></ellipse>
-      <ellipse cx="60" cy="60" rx="46" ry="18" transform="rotate(-60 60 60)" fill="none" stroke="var(--hairline-strong)" stroke-width="2.6"></ellipse>
-      <text x="54" y="60" dy="6" font-family="var(--font-mono)" font-weight="500" font-size="18" fill="#569cd6" text-anchor="middle">&gt;</text>
-      <rect x="61" y="53" width="6" height="14" fill="#dcdcaa"></rect>
-      <circle cx="106" cy="60" r="5" fill="#ce9178"></circle>
-      <circle cx="83" cy="99.8" r="5" fill="#b5cea8"></circle>
-      <circle cx="83" cy="20.2" r="5" fill="#c586c0"></circle>
-    </svg>ATOM LABS</a>
+    <a href="#top" class="wordmark"><div class="nav-icon-stage">
+      <svg id="navAtomSvg" class="nav-icon-svg" viewBox="0 0 120 120" aria-hidden="true">
+        <ellipse cx="60" cy="60" rx="46" ry="18" fill="none" stroke="var(--hairline-strong)" stroke-width="2.6"></ellipse>
+        <ellipse cx="60" cy="60" rx="46" ry="18" transform="rotate(60 60 60)" fill="none" stroke="var(--hairline-strong)" stroke-width="2.6"></ellipse>
+        <ellipse cx="60" cy="60" rx="46" ry="18" transform="rotate(-60 60 60)" fill="none" stroke="var(--hairline-strong)" stroke-width="2.6"></ellipse>
+        <text x="54" y="60" dy="6" font-family="var(--font-mono)" font-weight="500" font-size="18" fill="#569cd6" text-anchor="middle">&gt;</text>
+        <rect x="61" y="53" width="6" height="14" fill="#dcdcaa"></rect>
+        <circle cx="106" cy="60" r="5" fill="#ce9178"></circle>
+        <circle cx="83" cy="99.8" r="5" fill="#b5cea8"></circle>
+        <circle cx="83" cy="20.2" r="5" fill="#c586c0"></circle>
+      </svg>
+      <canvas id="navAtomCanvas" class="nav-icon-canvas" aria-hidden="true"></canvas>
+    </div>ATOM LABS</a>
     <div class="nav-links">
       <a href="#catalog">Projects</a>
       <a href="#contact">Contact</a>
@@ -719,18 +747,16 @@ footer .foot-links a:hover { color: var(--accent); }
 
 <script>
 (function () {
-  var svg = document.getElementById('heroAtomSvg');
-  var canvas = document.getElementById('heroAtomCanvas');
-  var stage = document.querySelector('.hero-icon-stage');
-  var heroSection = document.querySelector('.hero-split');
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  if (svg && canvas && stage && heroSection && !reduceMotion) {
+  function createExplodeIcon(svg, canvas, stage) {
+    if (!svg || !canvas || !stage) return null;
+
     var ctx = canvas.getContext('2d');
     var particles = [];
     var SAMPLE_SIZE = 240;
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    var progress = 0;
+    var lastProgress = 0;
 
     function buildParticles() {
       var cs = getComputedStyle(document.documentElement);
@@ -777,7 +803,7 @@ footer .foot-links a:hover { color: var(--accent); }
           }
         }
         particles = list;
-        render();
+        render(lastProgress);
       };
       img.src = url;
     }
@@ -791,7 +817,7 @@ footer .foot-links a:hover { color: var(--accent); }
 
     function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
 
-    function render() {
+    function render(progress) {
       var rect = canvas.getBoundingClientRect();
       var w = rect.width, h = rect.height;
       ctx.clearRect(0, 0, w, h);
@@ -815,40 +841,62 @@ footer .foot-links a:hover { color: var(--accent); }
       }
     }
 
-    function updateProgress() {
-      var rect = heroSection.getBoundingClientRect();
-      var raw = -rect.top / rect.height;
-      progress = Math.max(0, Math.min(1, raw));
-
+    function setProgress(progress) {
+      lastProgress = progress;
       if (progress <= 0.02) {
         svg.style.opacity = 1;
         canvas.style.opacity = 0;
       } else {
         svg.style.opacity = Math.max(0, 1 - progress * 3);
         canvas.style.opacity = 1;
-        render();
+        render(progress);
       }
     }
 
-    var ticking = false;
-    function onScroll() {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(function () {
-        updateProgress();
-        ticking = false;
-      });
-    }
-
     resizeCanvas();
-    window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', function () {
       resizeCanvas();
-      updateProgress();
+      render(lastProgress);
     });
 
     buildParticles();
-    updateProgress();
+    return { setProgress: setProgress };
+  }
+
+  if (!reduceMotion) {
+    var heroIcon = createExplodeIcon(
+      document.getElementById('heroAtomSvg'),
+      document.getElementById('heroAtomCanvas'),
+      document.querySelector('.hero-icon-stage')
+    );
+    var navIcon = createExplodeIcon(
+      document.getElementById('navAtomSvg'),
+      document.getElementById('navAtomCanvas'),
+      document.querySelector('.nav-icon-stage')
+    );
+    var heroSection = document.querySelector('.hero-split');
+
+    if ((heroIcon || navIcon) && heroSection) {
+      var ticking = false;
+      function updateProgress() {
+        var rect = heroSection.getBoundingClientRect();
+        var raw = -rect.top / rect.height;
+        var progress = Math.max(0, Math.min(1, raw));
+        if (heroIcon) heroIcon.setProgress(progress);
+        if (navIcon) navIcon.setProgress(progress);
+      }
+      function onScroll() {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(function () {
+          updateProgress();
+          ticking = false;
+        });
+      }
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', updateProgress);
+      updateProgress();
+    }
   }
 
   var io = new IntersectionObserver(function (entries) {
