@@ -202,6 +202,26 @@ p { text-wrap: pretty; }
   flex: none;
 }
 
+.atom-logo .atom-cursor-blink {
+  animation: atomBlink 1s step-end infinite;
+}
+.atom-logo .atom-electron {
+  animation: atomOrbit linear infinite;
+}
+.atom-logo .atom-electron--a { animation-duration: 7.2s; }
+.atom-logo .atom-electron--b { animation-duration: 9s; animation-delay: -2.7s; }
+.atom-logo .atom-electron--c { animation-duration: 10.8s; animation-delay: -5.4s; }
+
+@keyframes atomBlink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+@keyframes atomOrbit { to { offset-distance: 100%; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .atom-logo .atom-cursor-blink,
+  .atom-logo .atom-electron {
+    animation: none;
+  }
+}
+
 .nav-links {
   display: flex;
   align-items: center;
@@ -514,7 +534,16 @@ footer .foot-links a:hover { color: var(--accent); }
 
 <nav class="nav">
   <div class="wrap">
-    <a href="#top" class="wordmark"><canvas id="navAtom" class="wordmark-icon" width="72" height="72" aria-hidden="true"></canvas>ATOM LABS</a>
+    <a href="#top" class="wordmark"><svg class="atom-logo wordmark-icon" viewBox="0 0 120 120" aria-hidden="true">
+      <ellipse cx="60" cy="60" rx="46" ry="18" fill="none" stroke="var(--hairline-strong)" stroke-width="1.3"></ellipse>
+      <ellipse cx="60" cy="60" rx="46" ry="18" transform="rotate(60 60 60)" fill="none" stroke="var(--hairline-strong)" stroke-width="1.3"></ellipse>
+      <ellipse cx="60" cy="60" rx="46" ry="18" transform="rotate(-60 60 60)" fill="none" stroke="var(--hairline-strong)" stroke-width="1.3"></ellipse>
+      <text x="54" y="60" dy="6" font-family="var(--font-mono)" font-weight="500" font-size="18" fill="#569cd6" text-anchor="middle">&gt;</text>
+      <rect class="atom-cursor-blink" x="61" y="53" width="6" height="14" fill="#dcdcaa"></rect>
+      <g><circle class="atom-electron atom-electron--a" r="3.5" fill="#ce9178" style="offset-path:path('M 106 60 A 46 18 0 1 1 14 60 A 46 18 0 1 1 106 60');"></circle></g>
+      <g transform="rotate(60 60 60)"><circle class="atom-electron atom-electron--b" r="3.5" fill="#b5cea8" style="offset-path:path('M 106 60 A 46 18 0 1 1 14 60 A 46 18 0 1 1 106 60');"></circle></g>
+      <g transform="rotate(-60 60 60)"><circle class="atom-electron atom-electron--c" r="3.5" fill="#c586c0" style="offset-path:path('M 106 60 A 46 18 0 1 1 14 60 A 46 18 0 1 1 106 60');"></circle></g>
+    </svg>ATOM LABS</a>
     <div class="nav-links">
       <a href="#catalog">Projects</a>
       <a href="#contact">Contact</a>
@@ -528,7 +557,16 @@ footer .foot-links a:hover { color: var(--accent); }
     <div class="wrap hero-split-inner">
       <div class="hero-col">
         <div class="hero-title-row">
-          <canvas id="heroAtom" class="hero-icon" width="220" height="220" aria-hidden="true"></canvas>
+          <svg class="atom-logo hero-icon" viewBox="0 0 120 120" aria-hidden="true">
+            <ellipse cx="60" cy="60" rx="46" ry="18" fill="none" stroke="var(--hairline-strong)" stroke-width="1.3"></ellipse>
+            <ellipse cx="60" cy="60" rx="46" ry="18" transform="rotate(60 60 60)" fill="none" stroke="var(--hairline-strong)" stroke-width="1.3"></ellipse>
+            <ellipse cx="60" cy="60" rx="46" ry="18" transform="rotate(-60 60 60)" fill="none" stroke="var(--hairline-strong)" stroke-width="1.3"></ellipse>
+            <text x="54" y="60" dy="6" font-family="var(--font-mono)" font-weight="500" font-size="18" fill="#569cd6" text-anchor="middle">&gt;</text>
+            <rect class="atom-cursor-blink" x="61" y="53" width="6" height="14" fill="#dcdcaa"></rect>
+            <g><circle class="atom-electron atom-electron--a" r="3.5" fill="#ce9178" style="offset-path:path('M 106 60 A 46 18 0 1 1 14 60 A 46 18 0 1 1 106 60');"></circle></g>
+            <g transform="rotate(60 60 60)"><circle class="atom-electron atom-electron--b" r="3.5" fill="#b5cea8" style="offset-path:path('M 106 60 A 46 18 0 1 1 14 60 A 46 18 0 1 1 106 60');"></circle></g>
+            <g transform="rotate(-60 60 60)"><circle class="atom-electron atom-electron--c" r="3.5" fill="#c586c0" style="offset-path:path('M 106 60 A 46 18 0 1 1 14 60 A 46 18 0 1 1 106 60');"></circle></g>
+          </svg>
           <h1 class="hero-headline">Atom labs</h1>
         </div>
         <p class="hero-sub">A small, dev-led studio designing and building focused software &mdash; native apps and considered websites, done properly rather than done fast.</p>
@@ -646,107 +684,6 @@ footer .foot-links a:hover { color: var(--accent); }
 
 <script>
 (function () {
-  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var dpr = Math.min(window.devicePixelRatio || 1, 2);
-
-  var hairline = 'rgba(231, 236, 239, 0.35)';
-  var colors = { ink: '#e7ecef', accent: '#5cc9ff', trace: '#b69cff' };
-
-  function refreshColors() {
-    var cs = getComputedStyle(document.documentElement);
-    colors.ink = cs.getPropertyValue('--ink').trim() || colors.ink;
-    colors.accent = cs.getPropertyValue('--accent').trim() || colors.accent;
-    colors.trace = cs.getPropertyValue('--trace').trim() || colors.trace;
-  }
-  refreshColors();
-
-  function makeAtomIcon(canvasId) {
-    var canvas = document.getElementById(canvasId);
-    var ctx = canvas.getContext('2d');
-    var dims = { w: 0, h: 0 };
-
-    var TAU = Math.PI * 2;
-    var orbits = [
-      { rxf: 0.44, ryf: 0.98, rot: 0, speed: 0.55, phase: 0, key: 'accent' },
-      { rxf: 0.44, ryf: 0.98, rot: TAU / 3, speed: -0.48, phase: 2.1, key: 'trace' },
-      { rxf: 0.44, ryf: 0.98, rot: -TAU / 3, speed: 0.4, phase: 4.4, key: 'accent' }
-    ];
-
-    function resize() {
-      var rect = canvas.getBoundingClientRect();
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      dims = { w: rect.width, h: rect.height };
-    }
-    resize();
-    window.addEventListener('resize', resize);
-
-    function draw(t) {
-      var w = dims.w, h = dims.h;
-      var cx = w / 2, cy = h / 2;
-      ctx.clearRect(0, 0, w, h);
-
-      var baseR = Math.min(w, h) / 2 - Math.max(1.5, w * 0.02);
-      var electronR = baseR * 0.15;
-      var nucleusR = baseR * 0.22;
-
-      orbits.forEach(function (o) {
-        var rx = baseR * o.rxf, ry = baseR * o.ryf;
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.rotate(o.rot);
-        ctx.strokeStyle = hairline;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.restore();
-      });
-
-      orbits.forEach(function (o) {
-        var rx = baseR * o.rxf, ry = baseR * o.ryf;
-        var angle = o.phase + t * o.speed;
-        var ex = Math.cos(angle) * rx;
-        var ey = Math.sin(angle) * ry;
-        var px = cx + ex * Math.cos(o.rot) - ey * Math.sin(o.rot);
-        var py = cy + ex * Math.sin(o.rot) + ey * Math.cos(o.rot);
-        var color = colors[o.key];
-
-        ctx.beginPath();
-        ctx.fillStyle = color;
-        ctx.shadowColor = color;
-        ctx.shadowBlur = electronR * 2.6;
-        ctx.arc(px, py, electronR, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
-      });
-
-      ctx.beginPath();
-      ctx.fillStyle = colors.ink;
-      ctx.shadowColor = colors.ink;
-      ctx.shadowBlur = nucleusR * 2.2;
-      ctx.arc(cx, cy, nucleusR, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.shadowBlur = 0;
-    }
-
-    return { draw: draw };
-  }
-
-  var icons = [makeAtomIcon('navAtom'), makeAtomIcon('heroAtom')];
-
-  if (reduceMotion) {
-    icons.forEach(function (icon) { icon.draw(0); });
-  } else {
-    function loop(ts) {
-      var t = ts / 1000;
-      icons.forEach(function (icon) { icon.draw(t); });
-      requestAnimationFrame(loop);
-    }
-    requestAnimationFrame(loop);
-  }
-
   var io = new IntersectionObserver(function (entries) {
     entries.forEach(function (entry) {
       if (entry.isIntersecting) {
