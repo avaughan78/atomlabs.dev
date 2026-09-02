@@ -364,20 +364,25 @@ p { text-wrap: pretty; }
 }
 
 .catalog-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem 1.5rem;
+}
+@media (max-width: 640px) {
+  .catalog-list { grid-template-columns: 1fr; }
 }
 
 .catalog-row {
   display: flex;
   gap: 0.9rem;
-  padding: 1.15rem 0;
-  border-top: 1px solid var(--hairline);
+  padding: 1.15rem;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
   opacity: 0;
   transform: translateY(10px);
-  transition: opacity 0.5s ease, transform 0.5s ease;
+  transition: opacity 0.5s ease, transform 0.5s ease, border-color 0.15s ease;
 }
-.catalog-row:last-child { border-bottom: 1px solid var(--hairline); }
+.catalog-row:hover { border-color: var(--hairline-strong); }
 
 .catalog-row.in-view {
   opacity: 1;
